@@ -18,14 +18,16 @@ class CardViewModel(
     private val _action = MutableLiveData<ActionState>()
     val action: LiveData<ActionState> get() = _action
 
+    private val _loading = MutableLiveData<LoadingState>()
+    val loading: LiveData<LoadingState> get() = _loading
+
     fun getCardList() {
-        _state.postValue(ViewState.Loading)
+        _loading.postValue(LoadingState.Start)
         viewModelScope.launch {
             try {
                 val response = getCardListUseCase()
 
                 if (response.isSuccessful) {
-
                     val cardList = response.body()
                     if (cardList.isNullOrEmpty())
                         _action.postValue(ActionState.CardListEmpty)
@@ -34,13 +36,19 @@ class CardViewModel(
                 }
             } catch (e: Exception) {
                 _state.postValue(ViewState.CardListError(e))
+            } finally {
+                _loading.postValue(LoadingState.Stop)
             }
         }
     }
 
+    sealed class LoadingState {
+        object Start: LoadingState()
+        object Stop: LoadingState()
+    }
+
     sealed class ViewState {
         object Initial : ViewState()
-        object Loading : ViewState()
         data class CardListLoaded(val cards: List<Card>) : ViewState()
         data class CardListError(val exception: Exception) : ViewState()
     }

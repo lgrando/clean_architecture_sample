@@ -10,6 +10,6 @@ interface CardDataSource {
     }
 
     interface Local {
-
+        suspend fun getCachedCardList()
     }
 }
